@@ -1,6 +1,6 @@
-import { CouponService } from '../../../server/src/services/couponService.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
+import { CouponService } from '../src/services/couponService.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
 
 export const validateCoupon = asyncHandler(async (req, res) => {
   const { code, amount } = req.body;

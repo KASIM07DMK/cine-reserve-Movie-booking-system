@@ -1,6 +1,6 @@
-import { MovieService } from '../../../server/src/services/movieService.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
+import { MovieService } from '../src/services/movieService.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
 
 export const getMovies = asyncHandler(async (req, res) => {
   const result = await MovieService.getMovies(req.query);

@@ -1,17 +1,17 @@
-import { User } from '../models/User.js';
-import { Movie } from '../models/Movie.js';
-import { Cinema } from '../models/Cinema.js';
-import { Screen } from '../models/Screen.js';
-import { Show } from '../models/Show.js';
-import { ShowSeat } from '../models/ShowSeat.js';
-import { Booking } from '../models/Booking.js';
-import { Payment } from '../models/Payment.js';
-import { Coupon } from '../models/Coupon.js';
-import { TicketValidation } from '../models/TicketValidation.js';
-import { City } from '../models/City.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
-import { ApiError } from '../../../server/src/utils/ApiError.js';
+import { User } from '../src/models/User.js';
+import { Movie } from '../src/models/Movie.js';
+import { Cinema } from '../src/models/Cinema.js';
+import { Screen } from '../src/models/Screen.js';
+import { Show } from '../src/models/Show.js';
+import { ShowSeat } from '../src/models/ShowSeat.js';
+import { Booking } from '../src/models/Booking.js';
+import { Payment } from '../src/models/Payment.js';
+import { Coupon } from '../src/models/Coupon.js';
+import { TicketValidation } from '../src/models/TicketValidation.js';
+import { City } from '../src/models/City.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
+import { ApiError } from '../src/utils/ApiError.js';
 
 export const getDashboardMetrics = asyncHandler(async (req, res) => {
   const [

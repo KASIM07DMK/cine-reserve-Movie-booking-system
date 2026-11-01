@@ -10,7 +10,7 @@ export const paymentProvider = {
   createOrder: async ({ bookingId, amount, currency = 'INR', customerEmail }) => {
     const providerOrderId = `order_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const timestamp = Date.now();
-    
+
     // Create an order signature token for verification
     const orderPayload = `${providerOrderId}|${bookingId}|${amount}|${currency}`;
     const signature = crypto

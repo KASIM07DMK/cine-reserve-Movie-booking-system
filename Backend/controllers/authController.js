@@ -1,6 +1,6 @@
-import { AuthService } from '../../../server/src/services/authService.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
+import { AuthService } from '../src/services/authService.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
 import { config } from '../config/env.js';
 
 export const register = asyncHandler(async (req, res) => {

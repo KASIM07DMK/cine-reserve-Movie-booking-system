@@ -12,8 +12,8 @@ import {
   getAllBookings,
   getValidationLogs
 } from '../controllers/adminController.js';
-import { authenticate } from '../middleware/authMiddleware.js';
-import { requireAdmin } from '../middleware/adminMiddleware.js';
+import { authenticate } from '../src/middleware/authMiddleware.js';
+import { requireAdmin } from '../src/middleware/adminMiddleware.js';
 
 const router = Router();
 

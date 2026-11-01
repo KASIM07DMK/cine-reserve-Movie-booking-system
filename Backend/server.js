@@ -1,7 +1,7 @@
 import app from './app.js';
 import { connectDB } from './config/database.js';
 import { config } from './config/env.js';
-import { SeatService } from '../../server/src/services/seatService.js';
+import { SeatService } from './src/services/seatService.js';
 
 let server;
 

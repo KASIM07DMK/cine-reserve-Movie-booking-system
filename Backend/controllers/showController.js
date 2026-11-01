@@ -1,6 +1,6 @@
-import { ShowService } from '../../../server/src/services/showService.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
+import { ShowService } from '../src/services/showService.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
 
 export const getShowById = asyncHandler(async (req, res) => {
   const show = await ShowService.getShowDetails(req.params.showId);

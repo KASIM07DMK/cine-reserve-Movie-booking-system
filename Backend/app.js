@@ -3,10 +3,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { config } from './config/env.js';
-import { apiLimiter } from '../../server/src/middleware/rateLimiter.js';
-import { errorMiddleware } from '../../server/src/middleware/errorMiddleware.js';
-import { ApiError } from '../../server/src/utils/ApiError.js';
-import { ApiResponse } from '../../server/src/utils/ApiResponse.js';
+import { apiLimiter } from './src/middleware/rateLimiter.js';
+import { errorMiddleware } from './src/middleware/errorMiddleware.js';
+import { ApiError } from './src/utils/ApiError.js';
+import { ApiResponse } from './src/utils/ApiResponse.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';

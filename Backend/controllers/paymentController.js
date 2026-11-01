@@ -1,8 +1,8 @@
-import { PaymentService } from '../../../server/src/services/paymentService.js';
-import { Payment } from '../models/Payment.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
-import { ApiError } from '../../../server/src/utils/ApiError.js';
+import { PaymentService } from '../src/services/paymentService.js';
+import { Payment } from '../src/models/Payment.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
+import { ApiError } from '../src/utils/ApiError.js';
 
 export const createOrder = asyncHandler(async (req, res) => {
   const { bookingId } = req.body;

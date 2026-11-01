@@ -1,7 +1,7 @@
-import { City } from '../models/City.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
-import { ApiError } from '../../../server/src/utils/ApiError.js';
+import { City } from '../src/models/City.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
+import { ApiError } from '../src/utils/ApiError.js';
 
 export const getCities = asyncHandler(async (req, res) => {
   const { popular, search } = req.query;

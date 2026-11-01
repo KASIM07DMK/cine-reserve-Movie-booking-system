@@ -1,7 +1,7 @@
-import { BookingService } from '../services/bookingService.js';
-import { TicketService } from '../services/ticketService.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { BookingService } from '../src/services/bookingService.js';
+import { TicketService } from '../src/services/ticketService.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
 
 export const getTicketByBookingId = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;

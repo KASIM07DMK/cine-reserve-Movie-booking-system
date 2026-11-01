@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getTicketByBookingId, validateTicket } from '../controllers/ticketController.js';
-import { authenticate, optionalAuth } from '../../../server/src/middleware/authMiddleware.js';
-import { requireAdmin } from '../../../server/src/middleware/adminMiddleware.js';
+import { authenticate, optionalAuth } from '../src/middleware/authMiddleware.js';
+import { requireAdmin } from '../src/middleware/adminMiddleware.js';
 
 const router = Router();
 

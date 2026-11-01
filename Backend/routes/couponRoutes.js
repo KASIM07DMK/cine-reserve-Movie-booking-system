@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { validateCoupon, getAvailableCoupons } from '../controllers/couponController.js';
-import { optionalAuth } from '../middleware/authMiddleware.js';
+import { optionalAuth } from '../src/middleware/authMiddleware.js';
 
 const router = Router();
 

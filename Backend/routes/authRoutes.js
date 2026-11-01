@@ -7,10 +7,10 @@ import {
   updateProfile,
   changePassword
 } from '../controllers/authController.js';
-import { authenticate } from '../middleware/authMiddleware.js';
-import { authLimiter } from '../middleware/rateLimiter.js';
-import { validateBody } from '../middleware/validateRequest.js';
-import { validateRegister, validateLogin } from '../validators/authValidator.js';
+import { authenticate } from '../src/middleware/authMiddleware.js';
+import { authLimiter } from '../src/middleware/rateLimiter.js';
+import { validateBody } from '../src/middleware/validateRequest.js';
+import { validateRegister, validateLogin } from '../src/validators/authValidator.js';
 
 const router = Router();
 

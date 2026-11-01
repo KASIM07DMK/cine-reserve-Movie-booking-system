@@ -6,9 +6,9 @@ import {
   getBookingById,
   cancelBooking
 } from '../controllers/bookingController.js';
-import { authenticate, optionalAuth } from '../middleware/authMiddleware.js';
-import { validateBody } from '../middleware/validateRequest.js';
-import { validateBookingCreation } from '../validators/bookingValidator.js';
+import { authenticate, optionalAuth } from '../src/middleware/authMiddleware.js';
+import { validateBody } from '../src/middleware/validateRequest.js';
+import { validateBookingCreation } from '../src/validators/bookingValidator.js';
 
 const router = Router();
 

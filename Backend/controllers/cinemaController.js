@@ -1,8 +1,8 @@
-import { Cinema } from '../models/Cinema.js';
-import { Show } from '../models/Show.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
-import { ApiError } from '../../../server/src/utils/ApiError.js';
+import { Cinema } from '../src/models/Cinema.js';
+import { Show } from '../src/models/Show.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
+import { ApiError } from '../src/utils/ApiError.js';
 
 export const getCinemas = asyncHandler(async (req, res) => {
   const { cityId, search } = req.query;

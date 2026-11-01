@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { createOrder, verifyPayment, getPaymentById } from '../controllers/paymentController.js';
-import { authenticate, optionalAuth } from '../middleware/authMiddleware.js';
-import { validateBody } from '../middleware/validateRequest.js';
-import { validatePaymentVerification } from '../validators/paymentValidator.js';
+import { authenticate, optionalAuth } from '../src/middleware/authMiddleware.js';
+import { validateBody } from '../src/middleware/validateRequest.js';
+import { validatePaymentVerification } from '../src/validators/paymentValidator.js';
 
 const router = Router();
 

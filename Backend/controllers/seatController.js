@@ -1,6 +1,6 @@
-import { SeatService } from '../../../server/src/services/seatService.js';
-import { ApiResponse } from '../../../server/src/utils/ApiResponse.js';
-import { asyncHandler } from '../../../server/src/utils/asyncHandler.js';
+import { SeatService } from '../src/services/seatService.js';
+import { ApiResponse } from '../src/utils/ApiResponse.js';
+import { asyncHandler } from '../src/utils/asyncHandler.js';
 
 export const holdSeats = asyncHandler(async (req, res) => {
   const { showId } = req.params;
