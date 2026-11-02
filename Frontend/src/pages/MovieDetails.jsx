@@ -22,21 +22,39 @@ import {
   Compass
 } from 'lucide-react';
 
-const getYoutubeEmbedUrl = (url, autoplay = true) => {
+const getYoutubeEmbedUrl = (url, autoplay = false, mute = false) => {
   if (!url) return '';
-  if (url.includes('embed/')) return `${url}${autoplay ? '?autoplay=1' : ''}`;
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
   const videoId = match ? match[1] : '';
-  return videoId ? `https://www.youtube.com/embed/${videoId}${autoplay ? '?autoplay=1' : ''}` : url.replace('watch?v=', 'embed/');
+  if (!videoId) return url.replace('watch?v=', 'embed/');
+  const params = new URLSearchParams({
+    rel: '0',
+    modestbranding: '1',
+    enablejsapi: '1'
+  });
+  if (autoplay) {
+    params.set('autoplay', '1');
+    if (mute) {
+      params.set('mute', '1');
+    }
+  }
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
 };
 
 export const MovieDetails = () => {
-  const { movieId } = useParams();
+  const { movieId, idOrSlug } = useParams();
+  const activeId = idOrSlug || movieId;
   const { selectedCity, selectCity, cities, openCityModal } = useCity();
   const [movie, setMovie] = useState(null);
   const [cinemasWithShows, setCinemasWithShows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
   const [selectedFormat, setSelectedFormat] = useState('All');
+  const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const [dateShowCounts, setDateShowCounts] = useState({});
+  const [inlineTrailerActive, setInlineTrailerActive] = useState(false);
   const [viewAllCities, setViewAllCities] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trailerOpen, setTrailerOpen] = useState(false);
@@ -65,24 +83,43 @@ export const MovieDetails = () => {
     const loadDetails = async () => {
       setLoading(true);
       try {
-        const movieRes = await movieService.getMovieDetails(movieId);
-        setMovie(movieRes.data);
+        const movieRes = await movieService.getMovieDetails(activeId);
+        const currentMovie = movieRes.data;
+        setMovie(currentMovie);
+
+        // Auto-activate inline trailer for Ranabali
+        const isRanabali = currentMovie.slug === 'ranabali' || currentMovie.title?.toLowerCase().includes('ranabali');
+        if (isRanabali) {
+          setInlineTrailerActive(true);
+        }
+
+        // Default to movie's primary language if not yet set
+        const activeLang = selectedLanguage || currentMovie.languages?.[0] || 'All';
+        if (!selectedLanguage && currentMovie.languages?.length > 0) {
+          setSelectedLanguage(currentMovie.languages[0]);
+        }
 
         // Load showtimes for selected city (or all cities if viewAllCities is enabled)
         const cityFilter = viewAllCities ? null : selectedCity?._id;
-        const showsRes = await movieService.getMovieShows(movieRes.data._id, {
+        const showsRes = await movieService.getMovieShows(currentMovie._id, {
           cityId: cityFilter,
-          date: selectedDate
+          date: selectedDate,
+          language: activeLang !== 'All' ? activeLang : undefined
         });
 
+        setDateShowCounts(showsRes.data?.dateShowCounts || {});
         let loadedCinemas = showsRes.data?.cinemas || [];
 
-        // If specific city produced 0 shows, automatically fallback to all theatres so user is never stuck
+        // If specific city produced 0 shows, automatically fallback to all theatres
         if (loadedCinemas.length === 0 && selectedCity) {
-          const fallbackRes = await movieService.getMovieShows(movieRes.data._id, {
-            date: selectedDate
+          const fallbackRes = await movieService.getMovieShows(currentMovie._id, {
+            date: selectedDate,
+            language: activeLang !== 'All' ? activeLang : undefined
           });
           loadedCinemas = fallbackRes.data?.cinemas || [];
+          if (!showsRes.data?.dateShowCounts || Object.keys(showsRes.data.dateShowCounts).length === 0) {
+            setDateShowCounts(fallbackRes.data?.dateShowCounts || {});
+          }
         }
 
         setCinemasWithShows(loadedCinemas);
@@ -93,8 +130,10 @@ export const MovieDetails = () => {
       }
     };
 
-    loadDetails();
-  }, [movieId, selectedCity, selectedDate, viewAllCities]);
+    if (activeId) {
+      loadDetails();
+    }
+  }, [activeId, selectedCity, selectedDate, selectedLanguage, viewAllCities]);
 
   if (loading && !movie) {
     return <Loader size="large" text="Loading movie details and running theatres..." />;
@@ -112,11 +151,15 @@ export const MovieDetails = () => {
     );
   }
 
-  // Filter shows by format if selected
+  // Filter shows by format and individual film language
   const filteredCinemas = cinemasWithShows
     .map((item) => ({
       ...item,
-      shows: selectedFormat === 'All' ? item.shows : item.shows.filter((s) => s.format === selectedFormat)
+      shows: item.shows.filter((s) => {
+        const matchesFormat = selectedFormat === 'All' || s.format === selectedFormat;
+        const matchesLanguage = !selectedLanguage || selectedLanguage === 'All' || s.language === selectedLanguage;
+        return matchesFormat && matchesLanguage;
+      })
     }))
     .filter((item) => item.shows.length > 0);
 
@@ -142,11 +185,29 @@ export const MovieDetails = () => {
             }}
           />
         )}
+        {/* Dark gradient & Movie Logo watermark in background */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: 'linear-gradient(180deg, rgba(13,13,17,0.3) 0%, rgba(16,16,20,0.95) 75%, rgba(16,16,20,1) 100%)'
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            right: '4%',
+            bottom: '8%',
+            width: '420px',
+            height: '420px',
+            backgroundImage: `url(${movie.posterUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.12,
+            filter: 'blur(2px) grayscale(30%)',
+            borderRadius: 'var(--radius-xl)',
+            pointerEvents: 'none',
+            zIndex: 1
           }}
         />
 
@@ -296,6 +357,22 @@ export const MovieDetails = () => {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.8rem' }}>
+                <a
+                  href="#theatres-section"
+                  className="btn btn-primary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    padding: '0.75rem 1.6rem',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 20px rgba(229, 9, 20, 0.5)'
+                  }}
+                >
+                  <Ticket size={18} />
+                  <span>Book Tickets Now</span>
+                </a>
+
                 {movie.trailerUrl && (
                   <button
                     onClick={() => setTrailerOpen(true)}
@@ -311,25 +388,50 @@ export const MovieDetails = () => {
                     }}
                   >
                     <Play size={18} fill="#FFFFFF" />
-                    <span>Watch Official Trailer</span>
+                    <span>Watch Fullscreen HD</span>
                   </button>
                 )}
-
-                <a
-                  href="#theatres-section"
-                  className="btn btn-primary"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: '0.75rem 1.6rem',
-                    fontWeight: 700
-                  }}
-                >
-                  <Ticket size={18} />
-                  <span>Book Tickets Now</span>
-                </a>
               </div>
+
+              {/* Requirement 1: Embedded Video of Trailer with Movie Logo Artwork in Background */}
+              {movie.trailerUrl && (
+                <div style={{ marginTop: '1.5rem', width: '100%', maxWidth: '640px' }}>
+                  <div
+                    style={{
+                      borderRadius: 'var(--radius-lg)',
+                      overflow: 'hidden',
+                      boxShadow: '0 12px 35px rgba(0,0,0,0.8), 0 0 20px rgba(229,9,20,0.3)',
+                      border: '1.5px solid rgba(229,9,20,0.45)',
+                      background: '#0E0E14'
+                    }}
+                  >
+                    <div style={{ position: 'relative', paddingBottom: '50%', height: 0 }}>
+                      <iframe
+                        src={getYoutubeEmbedUrl(movie.trailerUrl, false)}
+                        title={`${movie.title} - Official Video Trailer`}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                    <div style={{ background: '#12121A', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <img
+                          src={movie.posterUrl}
+                          alt={`${movie.title} logo`}
+                          style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'cover', border: '1px solid #FFC107' }}
+                        />
+                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFF' }}>
+                          {movie.title} — Official Video Trailer
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: '#FFC107', fontWeight: 800 }}>
+                        HD 1080p
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -474,13 +576,27 @@ export const MovieDetails = () => {
           })}
         </div>
 
-        {/* Date & Format Selector */}
+        {/* District-style Date & Language Showtime Selector */}
         <ShowtimeSelector
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
           selectedFormat={selectedFormat}
           onSelectFormat={setSelectedFormat}
+          languages={movie?.languages || []}
+          selectedLanguage={selectedLanguage}
+          onSelectLanguage={setSelectedLanguage}
+          dateShowCounts={dateShowCounts}
         />
+
+        {/* Current Filter Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', padding: '0.6rem 1rem', background: 'rgba(255, 255, 255, 0.04)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <span style={{ fontSize: '0.88rem', color: '#E2E2F0' }}>
+            Showing <strong>{filteredCinemas.reduce((acc, c) => acc + c.shows.length, 0)}</strong> showtime(s) in <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{selectedLanguage || 'All'}</span> ({selectedFormat})
+          </span>
+          <span style={{ fontSize: '0.78rem', color: '#2EAD72', fontWeight: 700 }}>
+            ● Verified Real-Time Auditoriums
+          </span>
+        </div>
 
         {/* Running Theatres List */}
         <div>
@@ -529,10 +645,10 @@ export const MovieDetails = () => {
         >
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
             <iframe
-              src={getYoutubeEmbedUrl(movie.trailerUrl, true)}
+              src={getYoutubeEmbedUrl(movie.trailerUrl, true, false)}
               title={movie.title}
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
           </div>

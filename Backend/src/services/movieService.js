@@ -95,7 +95,11 @@ export class MovieService {
   /**
    * Get all shows for a movie filtered by city and date, grouped by cinema
    */
-  static async getMovieShows({ movieId, cityId, date = null }) {
+  /**
+   * Get all shows for a movie filtered by city, date, and language, grouped by cinema.
+   * Also computes District-style date-wise show counts for the upcoming week.
+   */
+  static async getMovieShows({ movieId, cityId, date = null, language = null }) {
     const movie = await Movie.findById(movieId);
     if (!movie) {
       throw new ApiError(404, 'Movie not found.');
@@ -117,14 +121,23 @@ export class MovieService {
     }
     const cinemas = await Cinema.find(cinemaQuery).populate('city');
     const cinemaMap = new Map(cinemas.map((c) => [c._id.toString(), c]));
+    const cinemaIds = Array.from(cinemaMap.keys());
 
-    // Query scheduled shows
-    const shows = await Show.find({
+    // Build query for scheduled shows on target date
+    const showQuery = {
       movie: movieId,
-      cinema: { $in: Array.from(cinemaMap.keys()) },
+      cinema: { $in: cinemaIds },
       startTime: { $gte: queryStart, $lte: endOfDay },
       status: 'scheduled'
-    })
+    };
+
+    // Filter by specific language if provided
+    if (language && language !== 'All') {
+      showQuery.language = language;
+    }
+
+    // Query scheduled shows
+    const shows = await Show.find(showQuery)
       .populate('screen')
       .sort({ startTime: 1 });
 
@@ -174,9 +187,36 @@ export class MovieService {
       cinemasWithShows.push(item);
     }
 
+    // Calculate District-style date-wise show counts for the next 7 days
+    const dateShowCounts = {};
+    for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + dayOffset);
+      const dayStart = new Date(d.setHours(0, 0, 0, 0));
+      const dayEnd = new Date(d.setHours(23, 59, 59, 999));
+      const rangeStart = dayStart < now ? now : dayStart;
+
+      const countFilter = {
+        movie: movieId,
+        cinema: { $in: cinemaIds },
+        startTime: { $gte: rangeStart, $lte: dayEnd },
+        status: 'scheduled'
+      };
+      if (language && language !== 'All') {
+        countFilter.language = language;
+      }
+
+      const count = await Show.countDocuments(countFilter);
+      // Format as YYYY-MM-DD
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      dateShowCounts[dateKey] = count;
+    }
+
     return {
       movie,
       date: startOfDay.toISOString().split('T')[0],
+      selectedLanguage: language || 'All',
+      dateShowCounts,
       cinemas: cinemasWithShows
     };
   }

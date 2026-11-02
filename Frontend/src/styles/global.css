@@ -16,13 +16,37 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-primary);
+  background-color: #0B0B0F;
   color: var(--text-main);
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Subtle Dark Mode Website Logo Background Watermark */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    radial-gradient(circle at 50% 38%, rgba(13, 13, 17, 0.86) 0%, rgba(11, 11, 15, 0.94) 55%, rgba(8, 8, 11, 0.98) 100%),
+    url('/logo.jpg');
+  background-repeat: no-repeat;
+  background-position: center 30%;
+  background-size: 580px auto;
+  background-attachment: fixed;
+  opacity: 0.16;
+  filter: grayscale(25%) contrast(135%) brightness(0.85);
+  pointer-events: none;
+  z-index: -1;
 }
 
 h1, h2, h3, h4, h5, h6 {

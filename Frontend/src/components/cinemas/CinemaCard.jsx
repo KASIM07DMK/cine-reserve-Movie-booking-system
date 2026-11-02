@@ -55,7 +55,7 @@ export const CinemaCard = ({ cinema, shows = [], onSelectShow }) => {
                 title={`${show.language} • ${show.format} • ${show.availabilityState}`}
               >
                 <span className="showtime-time">{formatTime(show.startTime)}</span>
-                <span className="showtime-sub">{show.format} • {show.language}</span>
+                <span className="showtime-sub">{show.screenName ? `${show.format} • ${show.screenName.split(' - ')[0]}` : `${show.format} • ${show.language}`}</span>
                 {isFillingFast && (
                   <span style={{ fontSize: '0.65rem', color: '#F5A623', fontWeight: 600, marginTop: '2px' }}>
                     Filling Fast

@@ -7,6 +7,25 @@ import { MovieGrid } from '../components/movies/MovieGrid';
 import { Star, Play, Ticket, MapPin, Sparkles, ArrowRight, ShieldCheck, Flame, TrendingUp, Film } from 'lucide-react';
 import { Modal } from '../components/common/Modal';
 
+const getYoutubeEmbedUrl = (url, autoplay = false, mute = true) => {
+  if (!url) return '';
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  const videoId = match ? match[1] : '';
+  if (!videoId) return url.replace('watch?v=', 'embed/');
+  const params = new URLSearchParams({
+    rel: '0',
+    modestbranding: '1',
+    enablejsapi: '1'
+  });
+  if (autoplay) {
+    params.set('autoplay', '1');
+    if (mute) {
+      params.set('mute', '1');
+    }
+  }
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+};
+
 export const Home = () => {
   const { selectedCity, openCityModal } = useCity();
   const [featuredMovies, setFeaturedMovies] = useState([]);
@@ -19,7 +38,7 @@ export const Home = () => {
   const navigate = useNavigate();
 
   const liveFeed = [
-    { user: 'Suresh K.', seats: '2 Recliner Seats', movie: 'Jailer 2', city: 'Hyderabad', theatre: "Prasad's Multiplex" },
+    { user: 'Suresh K.', seats: '2 Recliner Seats', movie: 'Ranabali', city: 'Hyderabad', theatre: "Prasad's Multiplex" },
     { user: 'Deepika R.', seats: '3 Premium Seats', movie: 'Pushpa 2: The Rule', city: 'Bengaluru', theatre: 'PVR Forum Koramangala' },
     { user: 'Vikram M.', seats: '4 Regular Seats', movie: 'Ranabali', city: 'Mumbai', theatre: 'INOX Megaplex' },
     { user: 'Karthik N.', seats: '2 IMAX 3D Seats', movie: '418', city: 'Chennai', theatre: 'SPI Palazzo Nexus' },
@@ -58,62 +77,204 @@ export const Home = () => {
     loadHomeData();
   }, [selectedCity]);
 
-  const heroMovie = featuredMovies[0] || nowShowing[0];
+  // Requirement 1: Prioritize Ranabaali with its official trailer and movie logo in the background
+  const ranabaliMatch =
+    nowShowing.find((m) => m.slug === 'ranabali' || m.title?.toLowerCase().includes('ranabaali') || m.title?.toLowerCase().includes('ranabali')) ||
+    featuredMovies.find((m) => m.slug === 'ranabali' || m.title?.toLowerCase().includes('ranabaali') || m.title?.toLowerCase().includes('ranabali'));
+
+  const heroMovie = ranabaliMatch || featuredMovies[0] || nowShowing[0];
   const activeFeed = liveFeed[liveBookingIdx];
 
   return (
     <div>
-      {/* Hero Showcase Banner */}
+      {/* Hero Showcase Banner: Ranabali Video Trailer with Movie Logo Backdrop */}
       {heroMovie && (
         <section className="container">
-          <div className="hero-banner">
+          <div
+            className="hero-banner"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '2.5rem',
+              alignItems: 'center',
+              minHeight: '520px',
+              padding: '2.5rem',
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: 'var(--radius-xl)',
+              border: '1px solid rgba(229, 9, 20, 0.35)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 9, 20, 0.2)'
+            }}
+          >
+            {/* Background Backdrop Artwork with Movie Logo Effect */}
             <img
               src={heroMovie.backdropUrl || heroMovie.posterUrl}
               alt={heroMovie.title}
               className="hero-backdrop"
               referrerPolicy="no-referrer"
+              style={{ filter: 'brightness(0.24) contrast(120%) blur(3px)', transform: 'scale(1.04)' }}
             />
-            <div className="hero-overlay" />
 
-            <div className="hero-content">
-              <div className="hero-badge">
-                <Sparkles size={14} />
-                <span>Featured Experience</span>
+            {/* Dark cinema vignette overlay */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, rgba(13, 13, 17, 0.95) 0%, rgba(13, 13, 17, 0.75) 50%, rgba(13, 13, 17, 0.92) 100%)',
+                zIndex: 1
+              }}
+            />
+
+            {/* Movie Logo Watermark in background */}
+            <div
+              style={{
+                position: 'absolute',
+                right: '2%',
+                bottom: '5%',
+                width: '420px',
+                height: '420px',
+                backgroundImage: `url(${heroMovie.posterUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: 0.1,
+                filter: 'blur(2px) grayscale(30%)',
+                borderRadius: 'var(--radius-xl)',
+                pointerEvents: 'none',
+                zIndex: 1
+              }}
+            />
+
+            {/* Left Content Column */}
+            <div style={{ position: 'relative', zIndex: 3 }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  background: 'rgba(229, 9, 20, 0.2)',
+                  border: '1px solid rgba(229, 9, 20, 0.5)',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: 'var(--radius-full)',
+                  marginBottom: '1rem'
+                }}
+              >
+                <Sparkles size={14} color="var(--accent-primary)" />
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                  Spotlight Action Spectacle
+                </span>
               </div>
 
-              <h1 className="hero-title">{heroMovie.title}</h1>
+              {/* Movie Title & Logo Crest */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '0.6rem' }}>
+                <img
+                  src={heroMovie.posterUrl}
+                  alt={`${heroMovie.title} Logo`}
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '10px',
+                    objectFit: 'cover',
+                    border: '2px solid rgba(255, 193, 7, 0.6)',
+                    boxShadow: '0 0 16px rgba(255, 193, 7, 0.35)'
+                  }}
+                />
+                <div>
+                  <h1 style={{ fontSize: '2.8rem', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.5px', color: '#FFFFFF' }}>
+                    {heroMovie.title}
+                  </h1>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#FFC107', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    Official Video Trailer • High-Octane Action
+                  </span>
+                </div>
+              </div>
 
-              <div className="hero-meta">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FFC107', fontWeight: 700 }}>
+              {/* Meta */}
+              <div className="hero-meta" style={{ marginTop: '0.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FFC107', fontWeight: 800, background: 'rgba(255, 193, 7, 0.12)', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
                   <Star size={16} fill="#FFC107" />
                   <span>{heroMovie.rating?.toFixed(1)} / 10</span>
                 </span>
-                <span>•</span>
-                <span>{heroMovie.certification}</span>
+                <span style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 700 }}>
+                  {heroMovie.certification}
+                </span>
                 <span>•</span>
                 <span>{heroMovie.durationMinutes} mins</span>
                 <span>•</span>
-                <span>{heroMovie.genres?.join(', ')}</span>
+                <span style={{ color: '#E0E0E0', fontWeight: 600 }}>{heroMovie.languages?.join(', ')}</span>
               </div>
 
-              <p className="hero-desc">{heroMovie.description}</p>
+              <p className="hero-desc" style={{ fontSize: '0.94rem', lineHeight: '1.6', color: '#D0D0DE', marginBottom: '1.5rem', maxWidth: '560px' }}>
+                {heroMovie.description}
+              </p>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                <Link to={`/movies/${heroMovie.slug || heroMovie._id}`} className="btn btn-primary btn-lg">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+                <Link
+                  to={`/movies/${heroMovie.slug || heroMovie._id}`}
+                  className="btn btn-primary btn-lg"
+                  style={{ boxShadow: '0 4px 20px rgba(229, 9, 20, 0.5)' }}
+                >
                   <Ticket size={18} />
-                  <span>Book Tickets</span>
+                  <span>Book Tickets Now</span>
                 </Link>
                 {heroMovie.trailerUrl && (
                   <button
                     onClick={() => setTrailerModalMovie(heroMovie)}
                     className="btn btn-secondary btn-lg"
+                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.25)' }}
                   >
                     <Play size={18} fill="#FFFFFF" />
-                    <span>Watch Trailer</span>
+                    <span>Watch Fullscreen HD</span>
                   </button>
                 )}
               </div>
             </div>
+
+            {/* Right Column: Video Trailer Player */}
+            {heroMovie.trailerUrl && (
+              <div
+                style={{
+                  position: 'relative',
+                  zIndex: 3,
+                  width: '100%',
+                  maxWidth: '520px',
+                  margin: '0 auto',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(229, 9, 20, 0.4)',
+                  border: '2px solid rgba(229, 9, 20, 0.45)',
+                  background: '#0D0D12'
+                }}
+              >
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+                  <iframe
+                    src={getYoutubeEmbedUrl(heroMovie.trailerUrl, false)}
+                    title={`${heroMovie.title} Official Trailer`}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none'
+                    }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+                {/* Trailer Bar with Movie Branding */}
+                <div style={{ background: '#12121A', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#E53945', display: 'inline-block', boxShadow: '0 0 8px #E53945' }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.5px' }}>
+                      {heroMovie.title} — Official Trailer
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: '#FFC107', fontWeight: 800 }}>
+                    🔥 TRENDING TRAILER
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -279,7 +440,7 @@ export const Home = () => {
         </section>
       )}
 
-      {/* Trailer Modal */}
+            {/* Trailer Modal */}
       {trailerModalMovie && (
         <Modal
           isOpen={Boolean(trailerModalMovie)}
@@ -289,10 +450,10 @@ export const Home = () => {
         >
           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
             <iframe
-              src={trailerModalMovie.trailerUrl.replace('watch?v=', 'embed/')}
+              src={getYoutubeEmbedUrl(trailerModalMovie.trailerUrl, true, false)}
               title={trailerModalMovie.title}
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', borderRadius: 'var(--radius-md)' }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
           </div>

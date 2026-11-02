@@ -17,7 +17,7 @@ export const movieService = {
     return api.get(`/movies/${idOrSlug}`);
   },
 
-  async getMovieShows(movieId, { cityId, date } = {}) {
-    return api.get(`/movies/${movieId}/shows`, { params: { cityId, date } });
+  async getMovieShows(movieId, { cityId, date, language } = {}) {
+    return api.get(`/movies/${movieId}/shows`, { params: { cityId, date, language } });
   }
 };

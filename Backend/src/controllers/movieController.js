@@ -28,7 +28,7 @@ export const getMovieDetails = asyncHandler(async (req, res) => {
 
 export const getMovieShows = asyncHandler(async (req, res) => {
   const { movieId } = req.params;
-  const { cityId, date } = req.query;
-  const result = await MovieService.getMovieShows({ movieId, cityId, date });
+  const { cityId, date, language } = req.query;
+  const result = await MovieService.getMovieShows({ movieId, cityId, date, language });
   return res.status(200).json(new ApiResponse(200, result, 'Movie shows retrieved.'));
 });
