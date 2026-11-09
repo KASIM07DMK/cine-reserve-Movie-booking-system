@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { config } from './config/env.js';
 import { apiLimiter } from './src/middleware/rateLimiter.js';
 import { errorMiddleware } from './src/middleware/errorMiddleware.js';
@@ -21,20 +24,42 @@ import couponRoutes from './routes/couponRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, '../Frontend/dist');
+
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers with relaxed cross-origin embedder policy for YouTube iframes and local assets
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false
+  })
+);
 
-// CORS configuration
+// CORS configuration supporting production domains, vercel, netlify, render, and localhost
+const configuredOrigins = (config.clientUrl || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, postman) or matching client URL
-      if (!origin || origin === config.clientUrl || origin.startsWith('http://localhost:')) {
+      if (
+        !origin ||
+        config.clientUrl === '*' ||
+        configuredOrigins.includes(origin) ||
+        origin.startsWith('http://localhost:') ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.netlify.app') ||
+        origin.endsWith('.onrender.com') ||
+        origin.endsWith('.railway.app')
+      ) {
         callback(null, true);
       } else {
-        callback(new Error('Blocked by CORS policy'));
+        callback(null, false);
       }
     },
     credentials: true,
@@ -44,9 +69,14 @@ app.use(
 );
 
 // Body and Cookie parsers
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser(config.cookieSecret));
+
+// Serve static frontend assets if built
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+}
 
 // Rate limiting for general API calls
 app.use('/api', apiLimiter);
@@ -80,8 +110,11 @@ app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/tickets', ticketRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
-// 404 handler for undefined endpoints
-app.use('*', (req, res, next) => {
+// SPA fallback for frontend client routing (non-API GET requests)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
+    return res.sendFile(path.join(frontendDistPath, 'index.html'));
+  }
   next(new ApiError(404, `Endpoint ${req.originalUrl} not found on this server.`));
 });
 
